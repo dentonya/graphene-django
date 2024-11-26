@@ -1,4 +1,5 @@
 import graphene
+import graphql_jwt
 import links.schema
 import users.schema
 
@@ -16,6 +17,13 @@ class Mutation(users.schema.Mutation, links.schema.Mutation, graphene.ObjectType
     This class serves as the entry point for all GraphQL mutations in the application. 
     It inherits from the existing mutation class in the links schema and extends it with additional functionality as needed.
     """
-    pass
+    # used to authenticate the User with its username and password to obtain the JSON Web token.
+    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    # to confirm that the token is valid, passing it as an argument.
+    verify_token = graphql_jwt.Verify.Field()
+    # to generate a new token with the same user for expired tokens, 
+    # passing the old token as an argument.
+    refresh_token = graphql_jwt.Refresh.Field()
+    
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
