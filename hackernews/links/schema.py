@@ -2,6 +2,7 @@ import graphene
 from graphene_django import DjangoObjectType
 
 from .models import Links
+from users.schema import UserType
 
 class LinkType(DjangoObjectType):
     """GraphQL type representation for the Links model.
@@ -46,6 +47,7 @@ class CreateLink(graphene.Mutation):
     id = graphene.Int()
     url = graphene.String()
     description = graphene.String()
+    posted_by = graphene.Field(UserType)
 
     class Arguments:
         """
@@ -74,13 +76,20 @@ class CreateLink(graphene.Mutation):
         description = graphene.String()
         
     def mutate(self,info,url,description):
-        link = Links(url=url,description=description)
+        user = info.context.user or None
+        link = Links(
+            url=url,
+            description=description,
+            # associate the link with the current user if authenticated, or None if not.
+            posted_by=user,  
+        )
         link.save()
         
         return CreateLink(
             id=link.id, 
             url=link.url, 
-            description=link.description
+            description=link.description,
+            posted_by=link.posted_by
         )
             
 class Mutation(graphene.ObjectType):
