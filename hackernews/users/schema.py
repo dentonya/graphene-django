@@ -3,6 +3,11 @@ from django.contrib.auth import get_user_model
 import graphene
 from graphene_django import DjangoObjectType
 
+class NotLoggedInError(Exception):
+    """Exception raised when a user is not logged in."""
+    pass
+
+
 class UserType(DjangoObjectType):
     """GraphQL type representation for the User model.
 
@@ -58,8 +63,15 @@ class Query(graphene.ObjectType):
     This class serves as the entry point for all GraphQL queries in the application. 
     It includes a single field, 'user', which returns the details of a specific user.
     """
+    me = graphene.Field(UserType)
     users = graphene.List(UserType)
     
     def resolve_users(self, info, **kwargs):
         """Retrieves all User objects from the database."""
         return get_user_model().objects.all()
+    def resolve_me(self,info):
+        user = info.context.user
+        if user.is_anonymous:
+            raise NotLoggedInError("Not logged in!")
+        return user
+    
